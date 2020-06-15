@@ -1,0 +1,26 @@
+-	name: Automate service management
+	hosts: service_hosts
+	tasks:
+		-	name: Start a service httpd using the service module
+			service:
+				name: httpd
+				state: started
+				enabled: true
+
+# Daemon reload can only be done by systemd module and not the service module
+		-	name: Start a service httpd using systemd module
+			systemd:
+				name: httpd
+				state: started
+				daemon-reload: yes
+
+# The service_facts module collects information about the services on the system, 
+# such as whether they are enabled to start at boot and whether they are currently running, 
+# and stores that information in the ansible_facts['services'] variable.
+		- name: Collect service status facts
+      service_facts:
+
+    - name: Check if httpd service is running
+      debug:
+        var: ansible_facts['services']['httpd.service']['state']
+
