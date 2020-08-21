@@ -1,0 +1,31 @@
+- name: Caching server config
+  hosts: caching_dns
+  tasks:
+  - name: Ensure unbound is installed
+    yum:
+      name: unbound
+      state: present
+
+  - name: Ensure config is present
+    template:
+      src: templates/server.conf.j2
+      dest: /etc/unbound/conf.d/server.conf
+      group: unbound
+      mode: '0644'
+      setype: named_conf_t
+#    when: inventory_hostname in groups['caching_dns']
+    notify: restart unbound
+
+  - name: dns is enabled in firewall
+    firewalld:
+      service: dns
+      immediate: true
+      permanent: true
+      state: enabled
+
+  handlers:
+    - name: restart unbound
+      service:
+        name: unbound
+        state: restarted
+        enabled: true

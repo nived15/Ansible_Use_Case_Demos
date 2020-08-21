@@ -1,0 +1,6 @@
+[dhcp_servers]
+servera.lab.example.com mac_if2="52:54:00:01:fa:0a"
+
+[clients]
+serverb.lab.example.com mac_if2="52:54:00:01:fa:0b"
+serverc.lab.example.com mac_if2="52:54:00:01:fa:0c"

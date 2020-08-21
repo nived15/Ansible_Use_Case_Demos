@@ -1,0 +1,12 @@
+- name: Ensure postfix is configured
+  hosts: nullclients
+  vars:
+    postfix_conf:
+      relayhost: "[smtp.lab.example.com]"
+      mynetworks: "127.0.0.0/8 [::1]/128"
+      inet_interfaces: "loopback-only"
+      myorigin: "lab.example.com"
+      mydestination: ""
+
+  roles:
+    - rhel-system-roles.postfix

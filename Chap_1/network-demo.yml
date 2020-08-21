@@ -1,0 +1,19 @@
+- name: Demo on managing network interfaces using roles
+  hosts: servera
+
+  vars:
+    network_connections:
+    - name: test_eth1
+      type: ethernet
+      interface_name: eth1
+      state: up
+      ip:
+        dhcp4: no
+        address:
+          - 172.25.250.21/24
+        gateway4: 172.25.250.254
+        dns:
+          - 172.25.254.254
+
+  roles:
+    - rhel-system-roles.network

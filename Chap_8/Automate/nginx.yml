@@ -1,0 +1,43 @@
+- name: Ensure apache is setup
+  hosts: nginx
+  vars:
+    certs:
+      - src: files/public.crt
+        dest: /etc/pki/tls/certs/public.crt
+      - src: files/private.key
+        dest: /etc/pki/tls/private/private.key
+      - src: files/index.html
+        dest: /usr/share/nginx/html/index.html
+  tasks:
+  - name: Ensure apache is installed
+    yum:  name=nginx state=present
+
+  - name: Ensure config file is present
+    template:
+      src: templates/nginx_secure_conf.j2
+      dest: /etc/nginx/conf.d/secure.conf
+    notify: restart nginx
+
+  - name: Ensure TLS certs are in place
+    copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: '0644'
+    loop: "{{ certs }}"
+
+  - name: Ensure port is open
+    firewalld:
+      service: "{{ item }}"
+      state: enabled
+      immediate: true
+      permanent: true
+    loop:
+      - http
+      - https
+
+  handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+      enabled: true

@@ -1,0 +1,13 @@
+server:
+
+{% for ip in ansible_facts['all_ipv4_addresses'] %}
+	interface: {{ ip }}
+{% endfor %}
+
+	interface-automatic: no
+	access-control: 172.25.0.0/16 allow
+	domain-insecure: example.com
+
+forward-zone:
+	name: "example.com"
+	forward-addr: 172.25.250.254

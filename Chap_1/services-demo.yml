@@ -1,0 +1,21 @@
+- name: Demo on different service management modules
+  hosts: servera
+
+  tasks:
+  - name: Ensure crond service is running
+    service:
+      name: crond
+      state: started
+
+  - name: Ensure systemd performs a daemon-reload
+    systemd:
+      name: crond
+      state: reloaded
+      daemon-reload: true
+
+  - name: Collect service related facts
+    service_facts:
+
+  - name: Check if crond is running
+    debug:
+      var: ansible_facts['services']['crond.service']['state']

@@ -1,0 +1,5 @@
+[apache]
+servera.lab.example.com
+
+[nginx]
+serverb.lab.example.com

@@ -1,0 +1,19 @@
+<Directory /var/www/html>
+Require all granted
+</Directory>
+
+
+<VirtualHost *:443>
+ServerName {{ ansible_fqdn }}
+ServerAlias {{ ansible_hostname }}
+ServerAdmin root@localhost
+ErrorLog logs/{{ ansible_hostname }}_error.log
+CustomLog logs/{{ ansible_hostname }}_access.log combined
+DocumentRoot /var/www/html
+SSLEngine on
+SSLHonorCipherOrder on
+SSLCipherSuite PROFILE=SYSTEM
+SSLProxyCipherSuite PROFILE=SYSTEM
+SSLCertificateFile /etc/pki/tls/certs/public.crt
+SSLCertificateKeyFile /etc/pki/tls/private/private.key
+</VirtualHost>

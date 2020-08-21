@@ -1,0 +1,51 @@
+---
+- name: Ensure /data is mounted from serverd iSCSI target
+  hosts: initiators
+  tasks:
+    - name: the iscsi-initiator-utils package is installed
+      yum:
+        name: iscsi-initiator-utils
+        state: present
+
+    - name: the IQN is set for the initiator
+      template:
+        dest: /etc/iscsi/initiatorname.iscsi
+        src: templates/initiatorname.iscsi.j2
+      notify: restart iscsid
+
+    # Forces the handler to run so that the iscsid service is restarted
+    # and is aware of the new initiator IQN
+    - meta: flush_handlers
+
+    - name: the iSCSI target is discovered and available
+      open_iscsi:
+        portal: 172.25.250.13
+        port: '3260'
+        target: iqn.2014-06.com.example:serverd
+        discover: yes
+        login: yes
+      register: target
+
+    - name: display the discovered devices
+      debug:
+        var: target['devicenodes']
+
+    - name: the new device is formatted and mounted under /data
+      include_role:
+        name: rhel-system-roles.storage
+      vars:
+        storage_volumes:
+          - name: devdata
+            state: present
+            type: disk
+            disks:
+              - "{{ target['devicenodes'][0] }}"
+            mount_point: /data
+            fs_type: xfs
+            mount_options: '_netdev'
+
+  handlers:
+    - name: restart iscsid
+      service:
+        name: iscsid
+        state: restarted

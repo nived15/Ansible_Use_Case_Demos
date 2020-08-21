@@ -1,0 +1,34 @@
+- name: Ensure Apache HTTP Server is deployed
+  hosts: web_servers
+  gather_facts: false
+
+  tasks:
+    - name: the httpd package is installed
+      yum:
+        name: httpd
+        state: present
+
+    - name: httpd is configured to listen on port 8080
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        insertafter: '^#Listen '
+        line: Listen 8080
+      notify: restart httpd
+
+    - name: the web content is deployed
+      copy:
+        content: "This is {{ inventory_hostname }}\n"
+        dest: /var/www/html/index.html
+
+    - name: the httpd service is started and enabled
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart httpd
+      service:
+        name: httpd
+        state: restarted

@@ -1,0 +1,5 @@
+- name: Ipv4 and ipv6
+  hosts: servera
+  tasks:
+
+  - command: "yum install httpd -y"

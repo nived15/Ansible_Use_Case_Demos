@@ -1,0 +1,59 @@
+- name: Bind configured on primary and secondary
+  hosts: all
+  vars:
+    zone_file:
+      - src: files/primary-backend.lab.example.com.zone
+        dest: /var/named/backend.lab.example.com.zone
+      - src: files/primary-192.168.0.zone
+        dest: /var/named/192.168.0.zone
+
+  tasks:
+  - name: Ensure bind is installed
+    yum:
+      name: bind
+      state: present
+
+  - name: primary dns is configured
+    copy:
+      src: files/primary-named.conf
+      dest: /etc/named.conf
+      group: named
+      mode: '0640'
+      setype: named_conf_t
+    when: inventory_hostname in groups['primary_dns']
+    notify: restart named
+
+  - name: secondary dns is configured
+    copy:
+      src: files/secondary-named.conf
+      dest: /etc/named.conf
+      group: named
+      mode: '0640'
+      setype: named_conf_t
+    when: inventory_hostname in groups['secondary_dns']
+    notify: restart named
+
+  - name: Copy forward and reverse zone files to primary dns
+    copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      group: named
+      mode: '0640'
+    when: inventory_hostname in groups['primary_dns']
+    loop: "{{ zone_file }}"
+    notify: restart named
+
+  - name: Ensure dns port is open
+    firewalld:
+      service: dns
+      immediate: true
+      permanent: true
+      state: enabled
+
+  handlers:
+  - name: restart named
+    service:
+      name: named
+      state: restarted
+      enabled: true
+

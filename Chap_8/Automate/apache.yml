@@ -1,0 +1,46 @@
+- name: Ensure apache is setup
+  hosts: apache
+  vars:
+    pkgs:
+      - httpd
+      - mod_ssl
+    configs:
+      - src: files/public.crt
+        dest: /etc/pki/tls/certs/public.crt
+      - src: files/private.key
+        dest: /etc/pki/tls/private/private.key
+      - src: files/index.html
+        dest: /var/www/html/index.html
+  tasks:
+  - name: Ensure apache is installed
+    yum:  name={{pkgs}} state=present
+
+  - name: Ensure config file is present
+    template:
+      src: templates/apache_secure_conf.j2
+      dest: /etc/httpd/conf.d/servera.conf
+    notify: restart httpd
+
+  - name: Ensure TLS certs are in place
+    copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: '0644'
+    loop: "{{ configs }}"
+
+  - name: Ensure port is open
+    firewalld:
+      service: "{{ item }}"
+      state: enabled
+      immediate: true
+      permanent: true
+    loop:
+      - http
+      - https
+
+  handlers:
+  - name: restart httpd
+    service:
+      name: httpd
+      state: restarted
+      enabled: true

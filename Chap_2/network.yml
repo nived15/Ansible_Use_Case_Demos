@@ -1,0 +1,57 @@
+- name: Demo of configuring team interface using roles
+  hosts: servera
+
+  vars:
+    network_connections:
+    
+    - name: team0
+      state: up
+      type: team
+      interface_name: team0
+      ip:
+        address:
+        - 172.25.250.30/24
+    
+    - name: slave1
+      state: up
+      type: ethernet
+      interface_name: eth1
+      master: team0
+    
+    - name: slave2
+      state: up
+      type: ethernet
+      interface_name: eth2
+      master: team0
+
+  tasks:
+  
+  - name: Ensure team0 is present
+    include_role:
+      name: rhel-system-roles.network
+    when: ansible_facts.team0 is not defined
+
+  - name: Register team0 config into a variable
+    command: teamdctl team0 state dump
+    register: team0_state
+    changed_when: false
+  
+  - name: Import team0 status as facts
+    set_fact:
+      team0_status: "{{ team0_state.stdout }}"
+  
+  - name: Ensure runner is configured
+    command: nmcli con mod team0 team.runner activebackup
+    notify: restart team0
+    when:
+    - team0_status.setup.runner_name != "activebackup"
+  
+  handlers:
+  
+  - name: disconnect team0
+    command: nmcli dev dis team0
+    listen: restart team0
+  
+  - name: start team0
+    command: nmcli con up team0
+    listen: restart team0
